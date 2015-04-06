@@ -19,7 +19,7 @@ class Picker:
 
     @asyncio.coroutine
     def _dispatch(self, order):
-        html = yield from self._download(url=order.url, method=order.method)
+        html = yield from self._download(url=order.url, method=order.method, headers=order.get_headers())
         order.save(order.to_dict(html))
 
     @asyncio.coroutine

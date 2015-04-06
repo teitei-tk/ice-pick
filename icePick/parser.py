@@ -1,6 +1,9 @@
-class Parser:
-    def __init__(self):
-        pass
+from bs4 import BeautifulSoup
 
-    def run(self, html):
+
+class Parser:
+    def __init__(self, html):
+        self.bs = BeautifulSoup(html.decode('utf-8', 'ignore'))
+
+    def run(self):
         return {}

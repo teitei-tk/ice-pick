@@ -14,6 +14,7 @@ def main():
     order = icePick.Order(document.get('url'), document.get('ua'))
     picker = icePick.Picker([order])
     picker.run()
+    print("download finish")
 
 if __name__ == "__main__":
     main()
