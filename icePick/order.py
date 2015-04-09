@@ -2,12 +2,12 @@ from .parser import Parser
 
 
 class Order:
-    def __init__(self, url, ua, method='GET', content_type='text/html', charset='utf-8'):
+    def __init__(self, url, ua, method='GET', charset='utf-8', content_type='text/html'):
         self.url = url
         self.ua = ua
         self.method = method
-        self.content_type = content_type
         self.charset = charset
+        self.content_type = content_type
 
     @property
     def user_agent(self):
@@ -25,14 +25,11 @@ class Order:
         parser = Parser(html)
         return parser.run()
         """
-        parser = Parser(html)
-        parser.run()
-
         return {}
 
     def save(self, result):
         """
-        hoge = Record.create()
-        hoge.save(result)
+        record = Record.create()
+        record.save(result)
         """
         pass
