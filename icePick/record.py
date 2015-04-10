@@ -1,4 +1,5 @@
 import re
+import datetime
 from .exception import RecordException, StructureException
 
 __all__ = ('Record', 'Structure')
@@ -13,7 +14,7 @@ class Structure(dict):
 
     def init_from_dict(self, data):
         if not isinstance(data, dict):
-            raise StructureException("%s arg is not a dictionary" % self.__class__.__name__)
+            raise StructureException("{0} arg is not a dictionary".format(self.__class__.__name__))
 
         # initialize store
         self.__store = {}
@@ -42,6 +43,15 @@ class Structure(dict):
     def to_dict(self):
         return self.__store
 
+    def to_mongo(self):
+        store = self.to_dict()
+
+        now = datetime.datetime.now()
+        if not 'created_at' in store.keys():
+            store['created_at'] = now
+        store['modified_at'] = now
+        return store
+
 
 class Record:
     struct = None
@@ -55,7 +65,7 @@ class Record:
 
     def init_from_dict(self, data):
         if not isinstance(self.struct, Structure):
-            raise RecordException("%s struct is not a defined" % self.__class__.__name__)
+            raise RecordException("{0} struct is not a defined".format(self.__class__.__name__))
 
         # initialize store data
         self.struct.init_from_dict(data)
@@ -101,13 +111,13 @@ class Record:
         return self.update({'_id': self.key()})
 
     def insert(self):
-        result = self.collection().insert_one(self.struct.to_dict())
+        result = self.collection().insert_one(self.struct.to_mongo())
         self.__store["_id"] = result.inserted_id
         self._key = result.inserted_id
         return True
 
     def update(self, query, upsert=False):
-        self.collection().update_one(query, self.struct.to_dict(), upsert=upsert)
+        self.collection().update_one(query, self.struct.to_mongo(), upsert=upsert)
         return True
 
     def delete(self, query):

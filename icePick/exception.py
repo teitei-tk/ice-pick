@@ -1,5 +1,9 @@
-__all__ = ('RecordException')
+__all__ = ('RecordException', 'StructureException')
 
 
 class RecordException(Exception):
+    pass
+
+
+class StructureException(Exception):
     pass
