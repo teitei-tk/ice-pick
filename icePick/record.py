@@ -1,8 +1,13 @@
 import re
 import datetime
+from pymongo import MongoClient
 from .exception import RecordException, StructureException
 
-__all__ = ('Record', 'Structure')
+__all__ = ('get_database', 'Record', 'Structure')
+
+
+def get_database(host, port):
+    return MongoClient(host, port)
 
 
 class Structure(dict):
@@ -112,8 +117,9 @@ class Record:
 
     def insert(self):
         result = self.collection().insert_one(self.struct.to_mongo())
-        self.__store["_id"] = result.inserted_id
+
         self._key = result.inserted_id
+        self.struct.assign_to_store('_id', result.inserted_id)
         return True
 
     def update(self, query, upsert=False):

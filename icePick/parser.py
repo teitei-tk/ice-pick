@@ -10,9 +10,8 @@ class Parser:
         return True
 
     def run(self):
-        result = {}
         if not self.can_allow_parse:
-            return result
+            return {}
         return self.serialize()
 
     def serialize(self):
