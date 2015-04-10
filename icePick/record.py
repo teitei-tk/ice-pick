@@ -1,40 +1,64 @@
 import re
-import hashlib
-import datetime
-from .icePick.exception import RecordException
+from .exception import RecordException, StructureException
 
-__all = ('Record', 'Structure')
+__all__ = ('Record', 'Structure')
+
+
+class Structure(dict):
+    __store = {}
+
+    def __init__(self, *args, **kwargs):
+        super(Structure, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+    def init_from_dict(self, data):
+        if not isinstance(data, dict):
+            raise StructureException("%s arg is not a dictionary" % self.__class__.__name__)
+
+        # initialize store
+        self.__store = {}
+
+        for key, value in self.__dict__.items():
+            result = data.get(key)
+            if not result:
+                result = value
+            self.__store[key] = value
+
+        self._validate()
+
+    def _validate(self):
+        pass
+
+    def assign_to_store(self, key, value):
+        if key in self.__store.keys():
+            self.__store[key] = value
+        raise StructureException("value is invalid type, key : {0}".format(value))
+
+    def get_from_store(self, key):
+        if key in self.__store.keys():
+            return self.__store[key]
+        raise StructureException("{0} is not a registered".format(key))
+
+    def to_dict(self):
+        return self.__store
 
 
 class Record:
     struct = None
-    __store = {}
 
     class Meta:
         database = None
 
     def __init__(self, key, data=None):
         self._key = key
-
         self.init_from_dict(data)
-        self._validate()
 
     def init_from_dict(self, data):
-        if not self.struct or not isinstance(self.struct, dict) or self._struct.__len__() <= 0:
+        if not isinstance(self.struct, Structure):
             raise RecordException("%s struct is not a defined" % self.__class__.__name__)
 
         # initialize store data
-        self.__store = {}
-
-        for key, value in self.struct.items():
-            # TODO : TypeCheck
-            result = data.get(key)
-            if not result:
-                result = value
-            self.__store[key] = result
-
-    def _validate(self):
-        pass
+        self.struct.init_from_dict(data)
 
     def key(self):
         return self._key
@@ -43,18 +67,10 @@ class Record:
         return self.__class__.__name__
 
     def __getattr__(self, key):
-        # TODO : Error Pattern
-        if key in self.__store:
-            return self.__store[key]
-        raise Exception()
+        return self.struct.get_from_store(key)
 
     def __setattr__(self, key, value):
-        # TODO : Error Pattern
-        if key in self.__store.keys():
-            # TODO : TypeCheck
-            self.__store[key] = value
-            return self.__store[key]
-        raise Exception()
+        self.struct.assign_for_store(key, value)
 
     @classmethod
     def colname(cls):
@@ -76,17 +92,22 @@ class Record:
         return cls(key, data)
 
     @classmethod
-    def find(cls, **kwargs):
-        return cls.collection().find(**kwargs)
+    def find(cls, *args, **kwargs):
+        return cls.collection().find(*args, **kwargs)
+
+    def save(self):
+        if not self.key():
+            return self.insert()
+        return self.update({'_id': self.key()})
 
     def insert(self):
-        result = self.collection().insert_one(self.__store)
+        result = self.collection().insert_one(self.struct.to_dict())
         self.__store["_id"] = result.inserted_id
         self._key = result.inserted_id
         return True
 
     def update(self, query, upsert=False):
-        self.collection().update_one(query, self.__store, upsert=upsert)
+        self.collection().update_one(query, self.struct.to_dict(), upsert=upsert)
         return True
 
     def delete(self, query):
