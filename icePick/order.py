@@ -20,7 +20,7 @@ class Order:
         }
         return headers
 
-    def to_dict(self, html):
+    def parse(self, html):
         """
         parser = Parser(html)
         return parser.run()
@@ -29,7 +29,7 @@ class Order:
 
     def save(self, result):
         """
-        record = Record.create()
+        record = Record.new()
         record.save(result)
         """
         pass
