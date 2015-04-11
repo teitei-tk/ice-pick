@@ -6,6 +6,10 @@ class Parser:
         self.bs = BeautifulSoup(html)
 
     @property
+    def lang(self):
+        return self.bs.find('html').get('lang')
+
+    @property
     def can_allow_parse(self):
         return True
 
