@@ -1,7 +1,8 @@
 import unittest
-from nose.tools import ok_
+from nose.tools import ok_, eq_
 
 import datetime
+from pymongo import MongoClient
 
 from tests.config import DB_HOST, DB_PORT, DB_NAME
 from icePick.record import get_database, Structure, Record
@@ -33,4 +34,17 @@ class TestRecord(unittest.TestCase):
         self.record = TestRecordModel.new()
 
     def tearDown(self):
-        pass
+        m = MongoClient(DB_HOST, DB_PORT)
+        m.drop_database(DB_NAME)
+
+    def test_colname(self):
+        eq_('test_record_model', self.record.colname())
+
+    def test_attrs(self):
+        new_str = "test_setattr"
+        self.record.string = new_str
+
+        eq_(new_str, self.record.string)
+
+    def test_new(self):
+        eq_(None, self.record.key())
