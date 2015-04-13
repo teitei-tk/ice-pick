@@ -6,8 +6,8 @@ from .exception import RecordException, StructureException
 __all__ = ('get_database', 'Record', 'Structure')
 
 
-def get_database(host, port):
-    return MongoClient(host, port)
+def get_database(db_name, host, port=27017):
+    return MongoClient(host, port)[db_name]
 
 
 class Structure(dict):
@@ -19,7 +19,7 @@ class Structure(dict):
 
     def init_from_dict(self, data):
         if not isinstance(data, dict):
-            raise StructureException("{0} arg is not a dictionary".format(self.__class__.__name__))
+            data = {}
 
         # initialize store
         self.__store = {}
@@ -38,6 +38,7 @@ class Structure(dict):
     def assign_to_store(self, key, value):
         if key in self.__store.keys():
             self.__store[key] = value
+            return True
         raise StructureException("value is invalid type, key : {0}".format(value))
 
     def get_from_store(self, key):
@@ -85,7 +86,10 @@ class Record:
         return self.struct.get_from_store(key)
 
     def __setattr__(self, key, value):
-        self.struct.assign_for_store(key, value)
+        if key in self.struct.keys():
+            return self.struct.assign_to_store(key, value)
+        else:
+            super(Record, self).__setattr__(key, value)
 
     @classmethod
     def colname(cls):
