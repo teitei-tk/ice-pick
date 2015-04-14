@@ -11,8 +11,6 @@ def get_database(db_name, host, port=27017):
 
 
 class Structure(dict):
-    __store = {}
-
     def __init__(self, *args, **kwargs):
         super(Structure, self).__init__(*args, **kwargs)
         self.__dict__ = self
@@ -21,14 +19,13 @@ class Structure(dict):
         if not isinstance(data, dict):
             data = {}
 
-        # initialize store
-        self.__store = {}
-
+        store = {}
         for key, value in self.__dict__.items():
             result = data.get(key)
             if not result:
                 result = value
-            self.__store[key] = value
+            store[key] = value
+        self.__store = store
 
         self._validate()
 

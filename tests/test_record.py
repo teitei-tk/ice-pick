@@ -48,3 +48,7 @@ class TestRecord(unittest.TestCase):
 
     def test_new(self):
         eq_(None, self.record.key())
+
+    def test_save(self):
+        self.record.string = "new_str"
+        self.record.save()
