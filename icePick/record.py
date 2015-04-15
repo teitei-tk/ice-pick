@@ -1,6 +1,7 @@
 import re
 import datetime
 from pymongo import MongoClient
+from bson import ObjectId
 from .exception import RecordException, StructureException
 
 __all__ = ('get_database', 'Record', 'Structure')
@@ -112,14 +113,19 @@ class Record:
 
     @classmethod
     def get(cls, key, *args, **kwargs):
-        data = cls.collection().find_one({'_id': key}, *args, **kwargs)
+        data = cls.collection().find_one({'_id': ObjectId(key)}, *args, **kwargs)
         if not data:
             return None
         return cls(key, data)
 
     @classmethod
     def find(cls, *args, **kwargs):
-        return cls.collection().find(*args, **kwargs)
+        results = cls.collection().find(*args, **kwargs)
+
+        insances = []
+        for _, v in enumerate(results):
+            insances += [cls(v['_id'].__str__(), v)]
+        return insances
 
     def save(self):
         if not self.key():

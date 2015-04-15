@@ -76,3 +76,20 @@ class TestRecord(unittest.TestCase):
         self.record.string = "update"
         self.record.save()
         eq_("update", self.record.string)
+
+    def test_get(self):
+        self.record.string = "new_str"
+        self.record.save()
+
+        exist_record = TestRecordModel.get(self.record.key())
+        eq_(exist_record.key(), self.record.key())
+        eq_(exist_record.string, self.record.string)
+
+    def test_find(self):
+        result = TestRecordModel.find()
+        eq_(0, result.__len__())
+        self.record.save()
+
+        result = TestRecordModel.find()
+        eq_(1, result.__len__())
+        eq_(result[0].key(), self.record.key())
