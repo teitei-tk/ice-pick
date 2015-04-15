@@ -11,6 +11,8 @@ def get_database(db_name, host, port=27017):
 
 
 class Structure(dict):
+    __store = {}
+
     def __init__(self, *args, **kwargs):
         super(Structure, self).__init__(*args, **kwargs)
         self.__dict__ = self
@@ -25,15 +27,15 @@ class Structure(dict):
             if not result:
                 result = value
             store[key] = value
-        self.__store = store
 
+        self.__store = store
         self._validate()
 
     def _validate(self):
         pass
 
     def assign_to_store(self, key, value):
-        if key in self.__store.keys():
+        if key in self.__store.keys() or key in "_id":
             self.__store[key] = value
             return True
         raise StructureException("value is invalid type, key : {0}".format(value))
@@ -44,7 +46,12 @@ class Structure(dict):
         raise StructureException("{0} is not a registered".format(key))
 
     def to_dict(self):
-        return self.__store
+        result = {}
+        for k, v in self.__store.items():
+            if '__store' in k:
+                continue
+            result[k] = v
+        return result
 
     def to_mongo(self):
         store = self.to_dict()
@@ -53,6 +60,9 @@ class Structure(dict):
         if not 'created_at' in store.keys():
             store['created_at'] = now
         store['modified_at'] = now
+
+        if '_id' in store.keys():
+            del store['_id']
         return store
 
 
@@ -102,7 +112,7 @@ class Record:
 
     @classmethod
     def get(cls, key, *args, **kwargs):
-        data = cls.collection().find_one(query={"_id": key}, *args, **kwargs)
+        data = cls.collection().find_one({'_id': key}, *args, **kwargs)
         if not data:
             return None
         return cls(key, data)
@@ -119,12 +129,12 @@ class Record:
     def insert(self):
         result = self.collection().insert_one(self.struct.to_mongo())
 
-        self._key = result.inserted_id
-        self.struct.assign_to_store('_id', result.inserted_id)
+        self._key = result.inserted_id.__str__()
+        self.struct.assign_to_store('_id', self.key())
         return True
 
     def update(self, query, upsert=False):
-        self.collection().update_one(query, self.struct.to_mongo(), upsert=upsert)
+        self.collection().update_one(query, {'$set': self.struct.to_mongo()}, upsert=upsert)
         return True
 
     def delete(self, query):
