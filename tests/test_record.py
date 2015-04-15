@@ -93,3 +93,14 @@ class TestRecord(unittest.TestCase):
         result = TestRecordModel.find()
         eq_(1, result.__len__())
         eq_(result[0].key(), self.record.key())
+
+    def test_delete(self):
+        self.record.save()
+
+        result = TestRecordModel.find()
+        eq_(1, result.__len__())
+
+        self.record.delete()
+
+        result = TestRecordModel.find()
+        eq_(0, result.__len__())

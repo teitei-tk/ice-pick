@@ -143,6 +143,9 @@ class Record:
         self.collection().update_one(query, {'$set': self.struct.to_mongo()}, upsert=upsert)
         return True
 
-    def delete(self, query):
-        self.collection().delete_one(query)
+    def delete(self):
+        if not self.key():
+            return False
+
+        self.collection().delete_one({'_id': ObjectId(self.key())})
         return True
