@@ -1,5 +1,5 @@
 import unittest
-from nose.tools import ok_
+from nose.tools import eq_
 
 import icePick
 from tests.config import PARSE_HTML
@@ -23,18 +23,18 @@ class TestParser(unittest.TestCase):
         self.parser = TestParserModel(PARSE_HTML)
 
     def test_lang(self):
-        ok_('en', self.parser.lang)
+        eq_('en', self.parser.lang)
 
     def test_serialize(self):
         result = self.parser.serialize()
 
-        ok_('TestHTML', result['title'])
-        ok_('charset', result['charset'])
-        ok_('HTML parse test', result['text'])
+        eq_('TestHTML', result['title'])
+        eq_('utf-8', result['charset'])
+        eq_('HTML parse test', result['text'])
 
     def test_run(self):
         result = self.parser.run()
 
-        ok_('TestHTML', result['title'])
-        ok_('charset', result['charset'])
-        ok_('HTML parse test', result['text'])
+        eq_('TestHTML', result['title'])
+        eq_('utf-8', result['charset'])
+        eq_('HTML parse test', result['text'])
