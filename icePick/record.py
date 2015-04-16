@@ -1,13 +1,14 @@
 import re
 import datetime
 from pymongo import MongoClient
+from bson import ObjectId
 from .exception import RecordException, StructureException
 
 __all__ = ('get_database', 'Record', 'Structure')
 
 
-def get_database(host, port):
-    return MongoClient(host, port)
+def get_database(db_name, host, port=27017):
+    return MongoClient(host, port)[db_name]
 
 
 class Structure(dict):
@@ -19,25 +20,25 @@ class Structure(dict):
 
     def init_from_dict(self, data):
         if not isinstance(data, dict):
-            raise StructureException("{0} arg is not a dictionary".format(self.__class__.__name__))
+            data = {}
 
-        # initialize store
-        self.__store = {}
-
+        store = {}
         for key, value in self.__dict__.items():
             result = data.get(key)
             if not result:
                 result = value
-            self.__store[key] = value
+            store[key] = value
 
+        self.__store = store
         self._validate()
 
     def _validate(self):
         pass
 
     def assign_to_store(self, key, value):
-        if key in self.__store.keys():
+        if key in self.__store.keys() or key in "_id":
             self.__store[key] = value
+            return True
         raise StructureException("value is invalid type, key : {0}".format(value))
 
     def get_from_store(self, key):
@@ -46,7 +47,12 @@ class Structure(dict):
         raise StructureException("{0} is not a registered".format(key))
 
     def to_dict(self):
-        return self.__store
+        result = {}
+        for k, v in self.__store.items():
+            if '__store' in k:
+                continue
+            result[k] = v
+        return result
 
     def to_mongo(self):
         store = self.to_dict()
@@ -55,6 +61,9 @@ class Structure(dict):
         if not 'created_at' in store.keys():
             store['created_at'] = now
         store['modified_at'] = now
+
+        if '_id' in store.keys():
+            del store['_id']
         return store
 
 
@@ -66,9 +75,9 @@ class Record:
 
     def __init__(self, key, data=None):
         self._key = key
-        self.init_from_dict(data)
+        self._init_from_dict(data)
 
-    def init_from_dict(self, data):
+    def _init_from_dict(self, data):
         if not isinstance(self.struct, Structure):
             raise RecordException("{0} struct is not a defined".format(self.__class__.__name__))
 
@@ -79,17 +88,20 @@ class Record:
         return self._key
 
     def __str__(self):
-        return self.__class__.__name__
+        return self.__name__
 
     def __getattr__(self, key):
         return self.struct.get_from_store(key)
 
     def __setattr__(self, key, value):
-        self.struct.assign_for_store(key, value)
+        if key in self.struct.keys():
+            self.struct.assign_to_store(key, value)
+        else:
+            super(Record, self).__setattr__(key, value)
 
     @classmethod
     def colname(cls):
-        return re.sub('(?!^)([A-Z]+)', r'_\1', cls.__class__.__name__).lower()
+        return re.sub('(?!^)([A-Z]+)', r'_\1', cls.__name__).lower().__str__()
 
     @classmethod
     def collection(cls):
@@ -101,14 +113,19 @@ class Record:
 
     @classmethod
     def get(cls, key, *args, **kwargs):
-        data = cls.collection().find_one(query={"_id": key}, *args, **kwargs)
+        data = cls.collection().find_one({'_id': ObjectId(key)}, *args, **kwargs)
         if not data:
             return None
         return cls(key, data)
 
     @classmethod
     def find(cls, *args, **kwargs):
-        return cls.collection().find(*args, **kwargs)
+        results = cls.collection().find(*args, **kwargs)
+
+        insances = []
+        for _, v in enumerate(results):
+            insances += [cls(v['_id'].__str__(), v)]
+        return insances
 
     def save(self):
         if not self.key():
@@ -118,14 +135,17 @@ class Record:
     def insert(self):
         result = self.collection().insert_one(self.struct.to_mongo())
 
-        self._key = result.inserted_id
-        self.struct.assign_to_store('_id', result.inserted_id)
+        self._key = result.inserted_id.__str__()
+        self.struct.assign_to_store('_id', self.key())
         return True
 
     def update(self, query, upsert=False):
-        self.collection().update_one(query, self.struct.to_mongo(), upsert=upsert)
+        self.collection().update_one(query, {'$set': self.struct.to_mongo()}, upsert=upsert)
         return True
 
-    def delete(self, query):
-        self.collection().delete_one(query)
+    def delete(self):
+        if not self.key():
+            return False
+
+        self.collection().delete_one({'_id': ObjectId(self.key())})
         return True
