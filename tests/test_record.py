@@ -49,6 +49,11 @@ class TestRecord(unittest.TestCase):
     def test_new(self):
         eq_(None, self.record.key())
 
+        new_record = TestRecordModel.new({
+            "string": "new_string"
+        })
+        eq_("new_string", new_record.string)
+
     def test_insert(self):
         eq_(None, self.record.key())
 

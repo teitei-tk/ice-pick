@@ -24,10 +24,13 @@ class Structure(dict):
 
         store = {}
         for key, value in self.__dict__.items():
+            if '__store' in key:
+                continue
+
             result = data.get(key)
             if not result:
                 result = value
-            store[key] = value
+            store[key] = result
 
         self.__store = store
         self._validate()
@@ -47,12 +50,7 @@ class Structure(dict):
         raise StructureException("{0} is not a registered".format(key))
 
     def to_dict(self):
-        result = {}
-        for k, v in self.__store.items():
-            if '__store' in k:
-                continue
-            result[k] = v
-        return result
+        return self.__store
 
     def to_mongo(self):
         store = self.to_dict()
@@ -91,7 +89,10 @@ class Record:
         return self.__name__
 
     def __getattr__(self, key):
-        return self.struct.get_from_store(key)
+        if key in self.struct.keys():
+            return self.struct.get_from_store(key)
+        else:
+            return super(Record, self).__getattr__(key)
 
     def __setattr__(self, key, value):
         if key in self.struct.keys():
@@ -108,8 +109,8 @@ class Record:
         return cls.Meta.database[cls.colname()]
 
     @classmethod
-    def new(cls):
-        return cls(None)
+    def new(cls, data=None):
+        return cls(None, data)
 
     @classmethod
     def get(cls, key, *args, **kwargs):
