@@ -68,7 +68,7 @@ class TestRecord(unittest.TestCase):
         self.assertNotEqual(None, self.record.key())
 
         self.record.string = "new_str"
-        self.record.update({'_id': self.record.key()})
+        self.record.update()
         eq_("new_str", self.record.string)
 
     def test_save(self):

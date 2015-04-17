@@ -131,7 +131,7 @@ class Record:
     def save(self):
         if not self.key():
             return self.insert()
-        return self.update({'_id': self.key()})
+        return self.update()
 
     def insert(self):
         result = self.collection().insert_one(self.struct.to_mongo())
@@ -140,8 +140,11 @@ class Record:
         self.struct.assign_to_store('_id', self.key())
         return True
 
-    def update(self, query, upsert=False):
-        self.collection().update_one(query, {'$set': self.struct.to_mongo()}, upsert=upsert)
+    def update(self, upsert=False):
+        if not self.key():
+            return self.insert()
+
+        self.collection().update_one({'_id': self.key()}, {'$set': self.struct.to_mongo()}, upsert=upsert)
         return True
 
     def delete(self):
