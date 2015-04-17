@@ -49,6 +49,11 @@ class TestRecord(unittest.TestCase):
     def test_new(self):
         eq_(None, self.record.key())
 
+        new_record = TestRecordModel.new({
+            "string": "new_string"
+        })
+        eq_("new_string", new_record.string)
+
     def test_insert(self):
         eq_(None, self.record.key())
 
@@ -63,7 +68,7 @@ class TestRecord(unittest.TestCase):
         self.assertNotEqual(None, self.record.key())
 
         self.record.string = "new_str"
-        self.record.update({'_id': self.record.key()})
+        self.record.update()
         eq_("new_str", self.record.string)
 
     def test_save(self):
