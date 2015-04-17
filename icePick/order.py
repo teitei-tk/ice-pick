@@ -23,7 +23,7 @@ class Order:
         self.content_type = self.content_type.lower()
 
         if not isinstance(self.method, self.Method):
-            self.method = self.Method.POST
+            self.method = self.Method.GET
 
     @property
     def user_agent(self):

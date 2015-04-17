@@ -16,12 +16,12 @@ class TestOrder(unittest.TestCase):
     def test_validate(self):
         eq_('utf-8', self.order.charset)
         eq_('text/html', self.order.content_type)
-        eq_(icePick.Order.Method.POST, self.order.Method.POST)
+        eq_(icePick.Order.Method.POST, self.order.method)
 
         new_order = TestOrderModel(ORDER_URL, ORDER_UA, method="hogefuga", charset='uTF-8', content_type="TEXT/html")
         eq_('utf-8', new_order.charset)
         eq_('text/html', new_order.content_type)
-        eq_(icePick.Order.Method.GET, new_order.Method.GET)
+        eq_(icePick.Order.Method.GET, new_order.method)
 
     def test_user_agent(self):
         eq_(ORDER_UA, self.order.user_agent)
