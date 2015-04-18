@@ -11,7 +11,7 @@ IcePick is a All in one Package library for easy Scraping
 * Python 3.4 or later(not support 2.x)
 * MongoDB
 
-## Dependencies 
+## Dependencies Libraries
 * aiohttp
 * beautifulsoup4
 * pymongo >= 3.0
