@@ -61,4 +61,5 @@ class TestPickerModel(unittest.TestCase):
         eq_('tests', record.files[2])
         eq_('LICENSE', record.files[3])
         eq_('README.md', record.files[4])
-        eq_('requirements.txt', record.files[5])
+        eq_('circle.yml', record.files[5])
+        eq_('requirements.txt', record.files[6])
