@@ -30,7 +30,6 @@ class TestRecordModel(icePick.Record):
 class TestOrderModel(icePick.Order):
     def parse(self, html):
         parser = TestParserModel(html)
-        print(parser, html)
         return parser.run()
 
     def save(self, result):
