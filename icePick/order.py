@@ -1,6 +1,8 @@
 import enum
 from .parser import Parser
 
+__all__ = ('Order')
+
 
 class Order:
     class Method(enum.Enum):
