@@ -47,6 +47,9 @@ class TestPickerModel(unittest.TestCase):
         m.drop_database(DB_NAME)
 
     def test_run(self):
+        result = TestRecordModel.find()
+        eq_(0, result.__len__())
+
         self.picker.run()
 
         result = TestRecordModel.find()
