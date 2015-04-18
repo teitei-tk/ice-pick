@@ -1,5 +1,7 @@
 from bs4 import BeautifulSoup
 
+__all__ = ('Parser')
+
 
 class Parser:
     def __init__(self, html):
@@ -19,4 +21,4 @@ class Parser:
         return self.serialize()
 
     def serialize(self):
-        pass
+        return {}
