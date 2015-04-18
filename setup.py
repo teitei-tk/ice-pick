@@ -1,35 +1,25 @@
 #!/usr/bin/env python
 '''
 IcePick
-------
+------------------
 IcePick is a All in one Package library for easy Scraping.
 
 
 Requirements
-- Python 3.4 or later(not support 2.x)
 ------------
+* Python 3.4 or later(not support 2.x)
 
 
-dependencies
-- aiohttp
-- beautifulsoup4
-- pymongo >= 3.0
-- nose
+Dependencies Libraries
 ------------
-
-
-Installation
-------------
-
-.. code-block:: bash
-    $ pip install icePick
-
+* aiohttp
+* beautifulsoup4
+* pymongo >= 3.0
+* nose
 
 Links
 `````
-* `website <https://github.com/teitei-tk/icePick>`_
-
-````````````````
+* `Github <https://github.com/teitei-tk/ice-pick>`_
 '''
 
 try:
@@ -43,10 +33,10 @@ except ImportError:
 
 classifiers = [
     'Development Status :: 3 - Alpha',
-    'License :: OSI Approved :: MIT License'
+    'License :: OSI Approved :: MIT License',
     'Programming Language :: Python',
-    'Programming Language :: Python :: 3'
-    'Programming Language :: Python :: 3 :: Only'
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3 :: Only',
     'Topic :: Software Development',
     'Topic :: Software Development :: Libraries',
     'Topic :: Software Development :: Libraries :: Python Modules',
@@ -59,10 +49,12 @@ setup(
     long_description=__doc__,
     author='teitei-tk',
     author_email='teitei.tk@gmail.com',
-    url='https://github.com/teitei-tk/icePick',
+    url='https://github.com/teitei-tk/ice-pick',
     packages=find_packages(),
     include_package_data=True,
     license='MIT',
     classifiers=classifiers,
     install_requires=open('requirements.txt').read().splitlines(),
+    keywords=['scraping'],
+    download_url='https://github.com/teitei-tk/ice-pick/archive/master.tar.gz'
 )
