@@ -1,7 +1,7 @@
 import unittest
 from nose.tools import eq_
 from pymongo import MongoClient
-from threading import Thread 
+from threading import Thread
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 import icePick
@@ -47,12 +47,13 @@ class TestPickerModel(unittest.TestCase):
         order = TestOrderModel(ORDER_URL, ORDER_UA)
         self.picker = icePick.Picker([order])
 
-        self.httpd = HTTPServer((ORDER_HOST, ORDER_PORT), TestRequestHandler)
-        self.httpd.serve_forever()
+        self.httpd = HTTPServer((ORDER_HOST, int(ORDER_PORT)), TestRequestHandler)
+
+        thread = Thread(target=self.httpd.serve_forever)
+        thread.start()
 
     def tearDown(self):
         thread = Thread(target=self.httpd.shutdown)
-        thread.daemon = True
         thread.start()
 
         m = MongoClient(DB_HOST, DB_PORT)
@@ -70,4 +71,4 @@ class TestPickerModel(unittest.TestCase):
         record = result[0]
         eq_('TestHTML', record.title)
         eq_('utf-8', record.charset)
-        eq_('text', record.text)
+        eq_('HTML parse test', record.text)
