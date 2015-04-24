@@ -1,27 +1,32 @@
 import unittest
 from nose.tools import eq_
 from pymongo import MongoClient
+from threading import Thread 
+from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 import icePick
-from tests.config import DB_HOST, DB_PORT, DB_NAME, ORDER_URL, ORDER_UA
-
+from tests.config import DB_HOST, DB_PORT, DB_NAME, ORDER_HOST, ORDER_PORT, ORDER_URL, ORDER_UA, PARSE_HTML
+from tests.test_parser import TestParserModel as _TestParserModel
 
 db = icePick.get_database(DB_NAME, DB_HOST, DB_PORT)
 
 
-class TestParserModel(icePick.Parser):
-    def serialize(self):
-        result = {
-            "files": [],
-        }
+class TestRequestHandler(SimpleHTTPRequestHandler):
+    def do_GET(self):
+        body = str.encode(PARSE_HTML)
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html; charset=utf-8')
+        self.send_header('Content-length', len(body))
+        self.end_headers()
+        self.wfile.write(body)
 
-        for v in self.bs.find_all(class_="js-directory-link"):
-            result['files'] += [v.text]
-        return result
+
+class TestParserModel(_TestParserModel):
+    pass
 
 
 class TestRecordModel(icePick.Record):
-    struct = icePick.Structure(files=list())
+    struct = icePick.Structure(title=str(), charset=str(), text=str())
 
     class Meta:
         database = db
@@ -42,7 +47,14 @@ class TestPickerModel(unittest.TestCase):
         order = TestOrderModel(ORDER_URL, ORDER_UA)
         self.picker = icePick.Picker([order])
 
+        self.httpd = HTTPServer((ORDER_HOST, ORDER_PORT), TestRequestHandler)
+        self.httpd.serve_forever()
+
     def tearDown(self):
+        thread = Thread(target=self.httpd.shutdown)
+        thread.daemon = True
+        thread.start()
+
         m = MongoClient(DB_HOST, DB_PORT)
         m.drop_database(DB_NAME)
 
@@ -56,12 +68,6 @@ class TestPickerModel(unittest.TestCase):
         eq_(1, result.__len__())
 
         record = result[0]
-        eq_('example', record.files[0])
-        eq_('icePick', record.files[1])
-        eq_('tests', record.files[2])
-        eq_('.gitignore', record.files[3])
-        eq_('LICENSE', record.files[4])
-        eq_('README.md', record.files[5])
-        eq_('circle.yml', record.files[6])
-        eq_('requirements.txt', record.files[7])
-        eq_('setup.py', record.files[8])
+        eq_('TestHTML', record.title)
+        eq_('utf-8', record.charset)
+        eq_('text', record.text)
