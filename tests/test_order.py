@@ -23,9 +23,6 @@ class TestOrder(unittest.TestCase):
         eq_('text/html', new_order.content_type)
         eq_(icePick.Order.Method.GET, new_order.method)
 
-    def test_user_agent(self):
-        eq_(ORDER_UA, self.order.user_agent)
-
     def test_get_headers(self):
         headers = {
             'User-agent': ORDER_UA,
@@ -37,4 +34,4 @@ class TestOrder(unittest.TestCase):
         eq_({}, self.order.parse(PARSE_HTML))
 
     def test_save(self):
-        eq_(None, self.order.save({"foo": "bar"}))
+        eq_(False, self.order.save({"foo": "bar"}))

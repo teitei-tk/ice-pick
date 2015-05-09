@@ -5,7 +5,7 @@ import datetime
 from pymongo import MongoClient
 
 from tests.config import DB_HOST, DB_PORT, DB_NAME
-from icePick.record import get_database, Structure, Record
+from icePick.recorder import get_database, Structure, Recorder
 
 
 db = get_database(DB_NAME, DB_HOST, DB_PORT)
@@ -15,7 +15,7 @@ class TestStructureModel(Structure):
     pass
 
 
-class TestRecordModel(Record):
+class TestRecorderModel(Recorder):
     struct = TestStructureModel(
         string=str(),
         intger=int(),
@@ -29,16 +29,16 @@ class TestRecordModel(Record):
         database = db
 
 
-class TestRecord(unittest.TestCase):
+class TestRecorder(unittest.TestCase):
     def setUp(self):
-        self.record = TestRecordModel.new()
+        self.record = TestRecorderModel.new()
 
     def tearDown(self):
         m = MongoClient(DB_HOST, DB_PORT)
         m.drop_database(DB_NAME)
 
     def test_colname(self):
-        eq_('test_record_model', self.record.colname())
+        eq_('test_recorder_model', self.record.colname())
 
     def test_attrs(self):
         new_str = "test_setattr"
@@ -49,7 +49,7 @@ class TestRecord(unittest.TestCase):
     def test_new(self):
         eq_(None, self.record.key())
 
-        new_record = TestRecordModel.new({
+        new_record = TestRecorderModel.new({
             "string": "new_string"
         })
         eq_("new_string", new_record.string)
@@ -86,26 +86,26 @@ class TestRecord(unittest.TestCase):
         self.record.string = "new_str"
         self.record.save()
 
-        exist_record = TestRecordModel.get(self.record.key())
+        exist_record = TestRecorderModel.get(self.record.key())
         eq_(exist_record.key(), self.record.key())
         eq_(exist_record.string, self.record.string)
 
     def test_find(self):
-        result = TestRecordModel.find()
+        result = TestRecorderModel.find()
         eq_(0, result.__len__())
         self.record.save()
 
-        result = TestRecordModel.find()
+        result = TestRecorderModel.find()
         eq_(1, result.__len__())
         eq_(result[0].key(), self.record.key())
 
     def test_delete(self):
         self.record.save()
 
-        result = TestRecordModel.find()
+        result = TestRecorderModel.find()
         eq_(1, result.__len__())
 
         self.record.delete()
 
-        result = TestRecordModel.find()
+        result = TestRecorderModel.find()
         eq_(0, result.__len__())

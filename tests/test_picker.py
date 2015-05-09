@@ -25,7 +25,7 @@ class TestParserModel(_TestParserModel):
     pass
 
 
-class TestRecordModel(icePick.Record):
+class TestRecorderModel(icePick.Recorder):
     struct = icePick.Structure(title=str(), charset=str(), text=str())
 
     class Meta:
@@ -33,13 +33,8 @@ class TestRecordModel(icePick.Record):
 
 
 class TestOrderModel(icePick.Order):
-    def parse(self, html):
-        parser = TestParserModel(html)
-        return parser.run()
-
-    def save(self, result):
-        record = TestRecordModel.new(result)
-        return record.save()
+    recorder = TestRecorderModel
+    parser = TestParserModel
 
 
 class TestPickerModel(unittest.TestCase):
@@ -60,12 +55,12 @@ class TestPickerModel(unittest.TestCase):
         m.drop_database(DB_NAME)
 
     def test_run(self):
-        result = TestRecordModel.find()
+        result = TestRecorderModel.find()
         eq_(0, result.__len__())
 
         self.picker.run()
 
-        result = TestRecordModel.find()
+        result = TestRecorderModel.find()
         eq_(1, result.__len__())
 
         record = result[0]

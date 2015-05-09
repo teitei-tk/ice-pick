@@ -5,6 +5,9 @@ __all__ = ('Order')
 
 
 class Order:
+    recorder = None
+    parser = None
+
     class Method(enum.Enum):
         GET = "GET"
         POST = "POST"
@@ -13,7 +16,7 @@ class Order:
 
     def __init__(self, url, ua, method=None, charset='utf-8', content_type='text/html'):
         self.url = url
-        self.ua = ua
+        self.user_agent = ua
         self.method = method
         self.charset = charset
         self.content_type = content_type
@@ -27,10 +30,6 @@ class Order:
         if not isinstance(self.method, self.Method):
             self.method = self.Method.GET
 
-    @property
-    def user_agent(self):
-        return self.ua
-
     def get_headers(self):
         headers = {
             'User-agent': self.user_agent,
@@ -39,15 +38,15 @@ class Order:
         return headers
 
     def parse(self, html):
-        """
-        parser = Parser(html)
+        if not self.parser:
+            return {}
+
+        parser = self.parser(html)
         return parser.run()
-        """
-        return {}
 
     def save(self, result):
-        """
-        record = Record.new()
-        record.save(result)
-        """
-        pass
+        if not self.recorder:
+            return False
+
+        record = self.recorder.new(result)
+        return record.save()

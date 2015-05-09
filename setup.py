@@ -34,7 +34,7 @@ Scraping Flow,
 
 ::
 
-    Your Scraping Order(Order) -> Do Scraping(Picker) -> HTML Parse(Parser) -> Save in Database(Record)
+    Your Scraping Order(Order) -> Do Scraping(Picker) -> HTML Parse(Parser) -> Save in Database(Recorder)
 
 Example
 -------
@@ -60,7 +60,7 @@ get a my repository filenames
             return result
 
 
-    class GithubRepoRecord(icePick.Record):
+    class GithubRepoRecorder(icePick.Recorder):
         struct = icePick.Structure(files=list())
 
         class Meta:
@@ -68,13 +68,8 @@ get a my repository filenames
 
 
     class GithubRepoOrder(icePick.Order):
-        def parse(self, html):
-            parser = GithubRepoParser(html)
-            return parser.run()
-
-        def save(self, result):
-            record = GithubRepoRecord.new(result)
-            return record.save()
+        recorder = GithubRepoRecorder
+        parser = GithubRepoParser
 
 
     def main():
@@ -96,12 +91,12 @@ get a my repository filenames
 
     >>> import icePick
     >>> db = icePick.get_database('icePick_example', 'localhost')
-    >>> class GithubRepoRecord(icePick.Record):
+    >>> class GithubRepoRecorder(icePick.Recorder):
     ...     struct = icePick.Structure(files=list())
     ...     class Meta:
     ...         database = db
     ...
-    >>> records = GithubRepoRecord.find()
+    >>> records = GithubRepoRecorder.find()
     >>> records[0].files
     ['example', 'icePick', 'tests', 'LICENSE', 'README.md', 'circle.yml', 'requirements.txt']
     >>>

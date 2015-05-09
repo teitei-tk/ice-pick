@@ -2,9 +2,9 @@ import re
 import datetime
 from pymongo import MongoClient
 from bson import ObjectId
-from .exception import RecordException, StructureException
+from .exception import RecorderException, StructureException
 
-__all__ = ('get_database', 'Record', 'Structure')
+__all__ = ('get_database', 'Recorder', 'Structure')
 
 
 def get_database(db_name, host, port=27017):
@@ -65,7 +65,7 @@ class Structure(dict):
         return store
 
 
-class Record:
+class Recorder:
     struct = None
 
     class Meta:
@@ -77,13 +77,16 @@ class Record:
 
     def _init_from_dict(self, data):
         if not isinstance(self.struct, Structure):
-            raise RecordException("{0} struct is not a defined".format(self.__class__.__name__))
+            raise RecorderException("{0} struct is not a defined".format(self.__class__.__name__))
 
         # initialize store data
         self.struct.init_from_dict(data)
 
     def key(self):
         return self._key
+
+    def pk(self):
+        return ObjectId(self.key())
 
     def __str__(self):
         return self.__name__
@@ -92,13 +95,13 @@ class Record:
         if key in self.struct.keys():
             return self.struct.get_from_store(key)
         else:
-            return super(Record, self).__getattr__(key)
+            return super(Recorder, self).__getattr__(key)
 
     def __setattr__(self, key, value):
         if key in self.struct.keys():
             self.struct.assign_to_store(key, value)
         else:
-            super(Record, self).__setattr__(key, value)
+            super(Recorder, self).__setattr__(key, value)
 
     @classmethod
     def colname(cls):
@@ -144,12 +147,12 @@ class Record:
         if not self.key():
             return self.insert()
 
-        self.collection().update_one({'_id': self.key()}, {'$set': self.struct.to_mongo()}, upsert=upsert)
+        self.collection().update_one({'_id': self.pk()}, {'$set': self.struct.to_mongo()}, upsert=upsert)
         return True
 
     def delete(self):
         if not self.key():
             return False
 
-        self.collection().delete_one({'_id': ObjectId(self.key())})
+        self.collection().delete_one({'_id': self.pk()})
         return True
