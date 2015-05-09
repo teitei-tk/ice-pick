@@ -122,6 +122,7 @@ except ImportError:
     print("Please install setuptools.")
     sys.exit(1)
 
+import version
 
 classifiers = [
     'Development Status :: 3 - Alpha',
@@ -136,7 +137,7 @@ classifiers = [
 
 setup(
     name='icePick',
-    version='0.0.1',
+    version=version.VERSION,
     description='icePick is a All in one Package library for easy Scraping',
     long_description=__doc__,
     author='teitei-tk',
