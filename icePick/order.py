@@ -48,5 +48,14 @@ class Order:
         if not self.recorder:
             return False
 
-        record = self.recorder.new(result)
-        return record.save()
+        if isinstance(result, list):
+            for value in result:
+                record = self.recorder.new(value)
+                record.save()
+            return True
+
+        elif isinstance(result, dict):
+            record = self.recorder.new(result)
+            return record.save()
+
+        return False

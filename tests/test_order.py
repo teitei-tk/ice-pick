@@ -1,17 +1,36 @@
 import unittest
 from nose.tools import eq_
 
+from pymongo import MongoClient
+
 import icePick
-from tests.config import ORDER_URL, ORDER_UA, PARSE_HTML
+from tests.config import ORDER_URL, ORDER_UA, PARSE_HTML, DB_HOST, DB_PORT, DB_NAME
+
+db = icePick.get_database(DB_NAME, DB_HOST, DB_PORT)
 
 
 class TestOrderModel(icePick.Order):
     pass
 
 
+class TestMultipleRecorder(icePick.Recorder):
+    struct = icePick.Structure(value=str())
+
+    class Meta:
+        database = db
+
+
+class TestMultipleOrderModel(icePick.Order):
+    recorder = TestMultipleRecorder
+
+
 class TestOrder(unittest.TestCase):
     def setUp(self):
         self.order = TestOrderModel(ORDER_URL, ORDER_UA, method=TestOrderModel.Method.POST)
+
+    def tearDown(self):
+        m = MongoClient(DB_HOST, DB_PORT)
+        m.drop_database(DB_NAME)
 
     def test_validate(self):
         eq_('utf-8', self.order.charset)
@@ -35,3 +54,16 @@ class TestOrder(unittest.TestCase):
 
     def test_save(self):
         eq_(False, self.order.save({"foo": "bar"}))
+
+    def test_multi_save(self):
+        values = [
+            {"value": "hoge"},
+            {"value": "fuga"},
+        ]
+
+        order = TestMultipleOrderModel(ORDER_URL, ORDER_UA)
+        result = order.save(values)
+        eq_(True, result)
+
+        result = TestMultipleRecorder.find()
+        eq_(values.__len__(), result.__len__())
