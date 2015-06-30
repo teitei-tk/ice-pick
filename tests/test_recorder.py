@@ -92,20 +92,22 @@ class TestRecorder(unittest.TestCase):
 
     def test_find(self):
         result = TestRecorderModel.find()
-        eq_(0, result.__len__())
+        eq_(0, result.count())
         self.record.save()
 
         result = TestRecorderModel.find()
-        eq_(1, result.__len__())
-        eq_(result[0].key(), self.record.key())
+        eq_(1, result.count())
+
+        entity = TestRecorderModel.create(result[0])
+        eq_(entity.key(), self.record.key())
 
     def test_delete(self):
         self.record.save()
 
         result = TestRecorderModel.find()
-        eq_(1, result.__len__())
+        eq_(1, result.count())
 
         self.record.delete()
 
         result = TestRecorderModel.find()
-        eq_(0, result.__len__())
+        eq_(0, result.count())

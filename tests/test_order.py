@@ -66,4 +66,4 @@ class TestOrder(unittest.TestCase):
         eq_(True, result)
 
         result = TestMultipleRecorder.find()
-        eq_(values.__len__(), result.__len__())
+        eq_(values.__len__(), result.count())
