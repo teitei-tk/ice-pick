@@ -116,6 +116,10 @@ class Recorder:
         return cls(None, data)
 
     @classmethod
+    def create(cls, data):
+        return cls(data['_id'].__str__(), data)
+
+    @classmethod
     def get(cls, key, *args, **kwargs):
         data = cls.collection().find_one({'_id': ObjectId(key)}, *args, **kwargs)
         if not data:
@@ -124,12 +128,7 @@ class Recorder:
 
     @classmethod
     def find(cls, *args, **kwargs):
-        results = cls.collection().find(*args, **kwargs)
-
-        insances = []
-        for _, v in enumerate(results):
-            insances += [cls(v['_id'].__str__(), v)]
-        return insances
+        return cls.collection().find(*args, **kwargs)
 
     def save(self):
         if not self.key():
