@@ -14,7 +14,12 @@ class Order:
         PUT = "POST"
         DELETE = "POST"
 
-    def __init__(self, url, ua, method=None, charset='utf-8', content_type='text/html'):
+    class UserAgent(enum.Enum):
+        IE = "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko"
+        FIRE_FOX = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:34.0) Gecko/20100101 Firefox/34.0"
+        CHROME = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.124 Safari/537.36"
+
+    def __init__(self, url, ua=None, method=None, charset='utf-8', content_type='text/html'):
         self.url = url
         self.user_agent = ua
         self.method = method
@@ -29,6 +34,9 @@ class Order:
 
         if not isinstance(self.method, self.Method):
             self.method = self.Method.GET
+
+        if self.user_agent is None:
+            self.user_agent = self.UserAgent.IE.value
 
     def get_headers(self):
         headers = {
