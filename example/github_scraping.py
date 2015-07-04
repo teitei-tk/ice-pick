@@ -2,11 +2,9 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 
-import datetime
-
 import icePick
 
-db = icePick.get_database('nico_sp', 'localhost')
+db = icePick.get_database('icePick_example', 'localhost')
 
 
 class GithubRepoParser(icePick.Parser):
@@ -30,21 +28,6 @@ class GithubRepoRecorder(icePick.Recorder):
 class GithubRepoOrder(icePick.Order):
     recorder = GithubRepoRecorder
     parser = GithubRepoParser
-
-
-class NicoSpRecorder(icePick.Recorder):
-    struct = icePick.Structure(
-        vid=int(),
-        url=str(),
-        title=str(),
-        description=str(),
-        open_dt=datetime.datetime.now(),
-        start_dt=datetime.datetime.now(),
-        end_dt=datetime.datetime.now()
-    )
-
-    class Meta:
-        database = db
 
 
 def main():

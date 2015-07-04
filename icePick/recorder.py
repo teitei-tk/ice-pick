@@ -4,7 +4,7 @@ from pymongo import MongoClient
 from bson import ObjectId
 from .exception import RecorderException, StructureException
 
-__all__ = ('get_database', 'Recorder', 'Structure')
+__all__ = ['get_database', 'Recorder', 'Structure']
 
 
 def get_database(db_name, host, port=27017):
@@ -17,70 +17,51 @@ class Structure(dict):
     def __init__(self, *args, **kwargs):
         super(Structure, self).__init__(*args, **kwargs)
         self.__dict__ = self
-
-    def init_from_dict(self, data):
-        if not isinstance(data, dict):
-            data = {}
-
-        store = {}
-        for key, value in self.__dict__.items():
-            if '__store' in key:
-                continue
-
-            result = data.get(key)
-            if not result:
-                result = value
-            store[key] = result
-
-        self.__store = store
         self._validate()
 
     def _validate(self):
         pass
 
-    def assign_to_store(self, key, value):
-        if key in self.__store.keys() or key in "_id":
-            self.__store[key] = value
-            return True
-        raise StructureException("value is invalid type, key : {0}".format(value))
-
-    def get_from_store(self, key):
-        if key in self.__store.keys():
-            return self.__store[key]
-        raise StructureException("{0} is not a registered".format(key))
-
     def to_dict(self):
-        return self.__store
-
-    def to_mongo(self):
-        store = self.to_dict()
-
-        now = datetime.datetime.now()
-        if not 'created_at' in store.keys():
-            store['created_at'] = now
-        store['modified_at'] = now
-
-        if '_id' in store.keys():
-            del store['_id']
-        return store
+        return self.__dict__
 
 
 class Recorder:
     struct = None
+    __store = None
 
     class Meta:
         database = None
 
+    class DataStore:
+        def get(self, key):
+            return self.__dict__.get(key)
+
+        def set(self, key, value):
+            self.__dict__[key] = value
+
+        def to_dict(self):
+            return self.__dict__
+
     def __init__(self, key, data=None):
         self._key = key
+        self.__store = self.DataStore()
+
         self._init_from_dict(data)
 
     def _init_from_dict(self, data):
         if not isinstance(self.struct, Structure):
             raise RecorderException("{0} struct is not a defined".format(self.__class__.__name__))
 
+        if not isinstance(data, dict):
+            data = dict()
+
         # initialize store data
-        self.struct.init_from_dict(data)
+        for k, v in self.struct.to_dict().items():
+            result = data.get(k)
+            if not result:
+                result = v
+            self.__store.set(k, result)
 
     def key(self):
         return self._key
@@ -92,14 +73,14 @@ class Recorder:
         return self.__name__
 
     def __getattr__(self, key):
-        if key in self.struct.keys():
-            return self.struct.get_from_store(key)
+        if key in list(self.struct.keys()):
+            return self.__store.get(key)
         else:
             return super(Recorder, self).__getattr__(key)
 
     def __setattr__(self, key, value):
-        if key in self.struct.keys():
-            self.struct.assign_to_store(key, value)
+        if key in list(self.struct.keys()):
+            self.__store.set(key, value)
         else:
             super(Recorder, self).__setattr__(key, value)
 
@@ -117,7 +98,13 @@ class Recorder:
 
     @classmethod
     def create(cls, data):
-        return cls(data['_id'].__str__(), data)
+        key = None
+        if '_id' in data.keys():
+            key = data['_id']
+            if isinstance(data['_id'], ObjectId):
+                key = data['_id'].__str__()
+
+        return cls(key, data)
 
     @classmethod
     def get(cls, key, *args, **kwargs):
@@ -128,7 +115,7 @@ class Recorder:
 
     @classmethod
     def find(cls, *args, **kwargs):
-        return cls.collection().find(*args, **kwargs)
+        return [cls.create(x) for x in cls.collection().find(*args, **kwargs)]
 
     def save(self):
         if not self.key():
@@ -136,17 +123,17 @@ class Recorder:
         return self.update()
 
     def insert(self):
-        result = self.collection().insert_one(self.struct.to_mongo())
+        result = self.collection().insert_one(self.to_mongo())
 
         self._key = result.inserted_id.__str__()
-        self.struct.assign_to_store('_id', self.key())
+        self.__store.set('_id', self.key())
         return True
 
     def update(self, upsert=False):
         if not self.key():
             return self.insert()
 
-        self.collection().update_one({'_id': self.pk()}, {'$set': self.struct.to_mongo()}, upsert=upsert)
+        self.collection().update_one({'_id': self.pk()}, {'$set': self.to_mongo()}, upsert=upsert)
         return True
 
     def delete(self):
@@ -155,3 +142,18 @@ class Recorder:
 
         self.collection().delete_one({'_id': self.pk()})
         return True
+
+    def to_dict(self):
+        return self.__store.to_dict()
+
+    def to_mongo(self):
+        store = self.to_dict()
+
+        now = datetime.datetime.now()
+        if not 'created_at' in store.keys():
+            store['created_at'] = now
+        store['modified_at'] = now
+
+        if '_id' in store.keys():
+            del store['_id']
+        return store

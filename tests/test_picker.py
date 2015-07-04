@@ -56,14 +56,14 @@ class TestPickerModel(unittest.TestCase):
 
     def test_run(self):
         result = TestRecorderModel.find()
-        eq_(0, result.count())
+        eq_(0, result.__len__())
 
         self.picker.run()
 
         result = TestRecorderModel.find()
-        eq_(1, result.count())
+        eq_(1, result.__len__())
 
-        record = TestRecorderModel.create(result[0])
+        record = result[0]
         eq_('TestHTML', record.title)
         eq_('utf-8', record.charset)
         eq_('HTML parse test', record.text)
