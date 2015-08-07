@@ -14,7 +14,7 @@ class TestOrderModel(icePick.Order):
 
 
 class TestMultipleRecorder(icePick.Recorder):
-    struct = icePick.Structure(value=str())
+    struct = icePick.Structure(exists_check=int(), value=str())
 
     class Meta:
         database = db
@@ -22,6 +22,7 @@ class TestMultipleRecorder(icePick.Recorder):
 
 class TestMultipleOrderModel(icePick.Order):
     recorder = TestMultipleRecorder
+    exists_keys = ["exists_check"]
 
 
 class TestOrder(unittest.TestCase):
@@ -53,17 +54,27 @@ class TestOrder(unittest.TestCase):
         eq_({}, self.order.parse(PARSE_HTML))
 
     def test_save(self):
-        eq_(False, self.order.save({"foo": "bar"}))
+        eq_(False, self.order.save({"exists_check": 1, "foo": "bar"}))
 
     def test_multi_save(self):
         values = [
-            {"value": "hoge"},
-            {"value": "fuga"},
+            {"exists_check": 1, "value": "hoge"},
+            {"exists_check": 2, "value": "fuga"},
         ]
 
-        order = TestMultipleOrderModel(ORDER_URL, ORDER_UA)
-        result = order.save(values)
+        result = TestMultipleOrderModel(ORDER_URL, ORDER_UA).save(values)
         eq_(True, result)
 
-        result = TestMultipleRecorder.find()
-        eq_(values.__len__(), result.__len__())
+        results = TestMultipleRecorder.find()
+        eq_(values.__len__(), results.__len__())
+
+        values = [
+            {"exists_check": 1, "value": "bar"},
+            {"exists_check": 3, "value": "piyo"},
+        ]
+
+        TestMultipleOrderModel(ORDER_URL, ORDER_UA).save(values)
+        results = TestMultipleRecorder.find()
+        eq_(3, results.__len__())
+        eq_([1, 2, 3], [x.exists_check for x in results])
+        eq_(["hoge", "fuga", "piyo"], [x.value for x in results])
