@@ -114,6 +114,13 @@ class Recorder:
         return cls(key, data)
 
     @classmethod
+    def get_by(cls, key, value, *args, **kwargs):
+        data = cls.collection().find_one({key: value}, *args, **kwargs)
+        if not data:
+            return None
+        return cls.create(data)
+
+    @classmethod
     def find(cls, *args, **kwargs):
         return [cls.create(x) for x in cls.collection().find(*args, **kwargs)]
 
@@ -142,6 +149,10 @@ class Recorder:
 
         self.collection().delete_one({'_id': self.pk()})
         return True
+
+    @classmethod
+    def exists(cls, key, value):
+        return cls.find(filter={key: value}, limit=1).__len__() > 0
 
     def to_dict(self):
         return self.__store.to_dict()

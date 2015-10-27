@@ -1,5 +1,7 @@
 import enum
+
 from .parser import Parser
+from .recorder import Recorder
 
 __all__ = ('Order')
 
@@ -7,6 +9,7 @@ __all__ = ('Order')
 class Order:
     recorder = None
     parser = None
+    exists_keys = []
 
     class Method(enum.Enum):
         GET = "GET"
@@ -53,17 +56,24 @@ class Order:
         return parser.run()
 
     def save(self, result):
-        if not self.recorder:
+        def get_entity(value):
+            if self.exists_keys.__len__() <= 0:
+                return self.recorder.new(value)
+
+            for key in self.exists_keys:
+                record = self.recorder.get_by(key, value.get(key))
+                if not record:
+                    continue
+                return record
+            return self.recorder.new(value)
+
+        if self.recorder is None:
             return False
 
         if isinstance(result, list):
-            for value in result:
-                record = self.recorder.new(value)
-                record.save()
-            return True
+            return list(filter(lambda x: get_entity(x).save(), result)).__len__() <= result.__len__()
 
         elif isinstance(result, dict):
-            record = self.recorder.new(result)
-            return record.save()
+            return get_entity(result).save()
 
         return False
